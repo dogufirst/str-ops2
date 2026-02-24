@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STR OPS · Istanbul Atatürk</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0a0c0f;--surf:#111418;--surf2:#181c22;--brd:#232830;
+  --acc:#e8a020;--acc2:#3b82f6;--red:#ef4444;--grn:#22c55e;
+  --yel:#f59e0b;--txt:#e2e8f0;--mut:#64748b;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Bebas Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 0 48px;}
+
+/* HEADER */
+header{display:flex;align-items:flex-end;justify-content:space-between;padding:24px 24px 20px;border-bottom:1px solid var(--brd);}
+.logo h1{font-family:var(--disp);font-size:48px;letter-spacing:3px;line-height:1;}
+.logo h1 span{color:var(--acc);}
+.logo p{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;margin-top:5px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.utc-badge{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;}
+.station-badge{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border:1px solid var(--acc);border-radius:2px;opacity:.85;}
+.btn-settings{background:transparent;border:1px solid var(--brd);color:var(--mut);font-size:14px;width:32px;height:32px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.btn-settings:hover,.btn-settings.key-set{border-color:var(--grn);color:var(--grn);}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--brd);padding:0 24px;}
+.tab{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:10px 16px;background:transparent;border:none;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab:hover{color:var(--txt);}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+.page{display:none;padding:20px 24px 0;}.page.active{display:block;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surf);border:1px solid var(--brd);border-radius:6px;padding:28px;width:min(480px,90vw);}
+.modal h3{font-family:var(--disp);font-size:22px;letter-spacing:2px;margin-bottom:6px;}
+.modal p{font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:1px;margin-bottom:20px;line-height:1.6;}
+.modal label{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px;}
+.modal-row{display:flex;gap:10px;margin-bottom:10px;}
+.modal-input{flex:1;background:var(--bg);border:1px solid var(--brd);color:var(--txt);font-family:var(--mono);font-size:13px;padding:10px 14px;border-radius:3px;outline:none;transition:border-color .2s;}
+.modal-input:focus{border-color:var(--acc2);}
+.modal-status{font-family:var(--mono);font-size:11px;letter-spacing:1px;margin-bottom:16px;}
+.modal-status.ok{color:var(--grn);}.modal-status.warn{color:var(--yel);}
+.modal-footer{display:flex;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--brd);}
+
+/* UPLOAD */
+.upload-opts{display:flex;gap:12px;margin-bottom:20px;}
+.upload-opt{flex:1;border:2px dashed var(--brd);border-radius:4px;padding:28px 12px;text-align:center;cursor:pointer;background:var(--surf);transition:all .25s;position:relative;}
+.upload-opt:hover,.upload-opt.drag{border-color:var(--acc);background:#1a1508;}
+.upload-opt input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-opt-icon{font-size:26px;margin-bottom:8px;display:block;opacity:.6;}
+.upload-opt h3{font-family:var(--disp);font-size:15px;letter-spacing:2px;color:var(--txt);margin-bottom:3px;}
+.upload-opt p{font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:1px;}
+
+/* PREVIEW */
+#preview-wrap{display:none;margin-bottom:16px;background:var(--surf);border:1px solid var(--brd);border-radius:4px;overflow:hidden;}
+#preview-wrap img{width:100%;max-height:300px;object-fit:contain;display:block;background:#000;}
+.preview-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--brd);}
+.preview-bar span{font-family:var(--mono);font-size:11px;color:var(--mut);}
+
+/* BUTTONS */
+.btn-analyze{width:100%;padding:17px;background:var(--acc);color:#000;border:none;font-family:var(--disp);font-size:22px;letter-spacing:3px;cursor:pointer;border-radius:3px;transition:all .2s;margin-bottom:24px;}
+.btn-analyze:hover{background:#f5b340;transform:translateY(-1px);}
+.btn-analyze:disabled{opacity:.4;cursor:not-allowed;transform:none;background:#3d3510;color:#6b5a1a;}
+.btn-sm{padding:7px 14px;background:transparent;border:1px solid var(--brd);color:var(--mut);font-family:var(--mono);font-size:10px;letter-spacing:1px;cursor:pointer;border-radius:2px;transition:all .2s;}
+.btn-sm:hover{border-color:var(--acc);color:var(--acc);}
+
+/* LOADING */
+#loading{display:none;text-align:center;padding:40px;}
+.spinner{width:36px;height:36px;border:2px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-step{font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:1px;margin-top:5px;opacity:.4;transition:all .3s;}
+.loading-step.active{opacity:1;color:var(--acc);}
+.loading-step.done{opacity:.6;color:var(--grn);}
+
+/* ERROR */
+.error-box{display:none;background:#1a0808;border:1px solid #3f1212;border-radius:4px;padding:16px;font-family:var(--mono);font-size:12px;color:#fca5a5;margin-bottom:16px;white-space:pre-wrap;line-height:1.6;}
+
+/* RESULTS */
+#results{display:none;}
+.result-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.result-header h2{font-family:var(--disp);font-size:24px;letter-spacing:2px;}
+.result-ts{font-family:var(--mono);font-size:10px;color:var(--mut);}
+.btn-wa{font-family:var(--mono);font-size:10px;letter-spacing:1px;padding:7px 14px;background:#0d2e1a;border:1px solid #22c55e44;color:var(--grn);border-radius:2px;cursor:pointer;transition:all .2s;margin-left:auto;}
+.btn-wa:hover{background:var(--grn);color:#000;}
+
+/* SUMMARY BOX */
+.summary-box{background:var(--surf2);border:1px solid var(--brd);border-radius:4px;padding:18px 20px;margin-bottom:16px;}
+.summary-box h3{font-family:var(--disp);font-size:16px;letter-spacing:2px;color:var(--mut);margin-bottom:10px;}
+.summary-content{font-size:13px;line-height:1.8;}
+.summary-stat{font-family:var(--mono);font-size:11px;color:var(--mut);margin-bottom:6px;letter-spacing:1px;}
+
+/* FUEL WATCH BOX */
+.fuel-watch{background:#1a0e08;border:1px solid #3d2010;border-radius:4px;padding:16px 18px;margin-bottom:16px;}
+.fuel-watch h3{font-family:var(--disp);font-size:15px;letter-spacing:2px;color:var(--yel);margin-bottom:10px;}
+.fuel-watch-item{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:#fde68a;padding:5px 0;border-bottom:1px solid #2a1a08;}
+.fuel-watch-item:last-child{border-bottom:none;}
+.fuel-watch-note{font-family:var(--mono);font-size:10px;color:var(--mut);margin-top:10px;letter-spacing:1px;}
+
+/* FLIGHT CARD */
+.flights-grid{display:flex;flex-direction:column;gap:14px;margin-bottom:24px;}
+.flight-card{background:var(--surf);border:1px solid var(--brd);border-radius:4px;overflow:hidden;animation:fadeUp .4s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.flight-card.has-red{border-color:#3f0d0d;}
+
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px;background:var(--surf2);border-bottom:1px solid var(--brd);}
+.card-header-left{}
+.reg{font-family:var(--disp);font-size:28px;letter-spacing:2px;color:var(--acc);line-height:1;}
+.company{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:1px;margin-top:3px;}
+.callsigns{font-family:var(--mono);font-size:11px;color:#94a3b8;margin-top:2px;}
+.status-badge{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:2px;white-space:nowrap;margin-top:4px;}
+.status-ARRIVED{background:#1e2a3a;color:var(--acc2);}
+.status-INBOUND{background:#1a1f18;color:#86efac;}
+.status-DEPARTED{background:#1a1a1a;color:var(--mut);}
+.status-HANGAR{background:#1e1a2a;color:#a78bfa;}
+
+.pills{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--brd);}
+.pill{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:2px;letter-spacing:1px;}
+.pill-route{background:#1e2a3a;color:var(--acc2);}
+.pill-time{background:#1a1f18;color:#86efac;}
+.pill-ac{background:#1f1a14;color:#fbbf24;}
+.pill-date{background:#1a1a1a;color:var(--mut);}
+
+.card-body{padding:16px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:14px;}
+.info-item label{font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:3px;}
+.info-item .val{font-family:var(--mono);font-size:13px;color:var(--txt);}
+
+.flight-brief{background:var(--surf2);border:1px solid var(--brd);border-radius:3px;padding:12px 14px;margin-bottom:12px;font-size:13px;line-height:1.7;color:#cbd5e1;}
+
+/* RISKS */
+.risks{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.risk-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:3px;border-left:3px solid transparent;}
+.risk-RED{background:#1a0808;border-left-color:var(--red);}
+.risk-YELLOW{background:#1a1408;border-left-color:var(--yel);}
+.risk-GREEN{background:#081a0e;border-left-color:var(--grn);}
+.risk-INFO{background:#08121a;border-left-color:var(--acc2);}
+.risk-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.risk-text{font-size:13px;line-height:1.5;}
+.risk-text strong{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.risk-RED .risk-text strong{color:var(--red);}
+.risk-YELLOW .risk-text strong{color:var(--yel);}
+.risk-GREEN .risk-text strong{color:var(--grn);}
+.risk-INFO .risk-text strong{color:var(--acc2);}
+
+/* ACTIONS */
+.actions-section{background:#0e1a0e;border:1px solid #1a3a1a;border-radius:3px;padding:14px;}
+.actions-section h4{font-family:var(--mono);font-size:9px;color:#4ade80;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
+.action-list{display:flex;flex-direction:column;gap:5px;}
+.action-item{display:flex;align-items:flex-start;gap:8px;padding:4px 6px;border-radius:3px;cursor:pointer;transition:background .1s;}
+.action-item:hover{background:#1a2e1a;}
+.action-item.done{opacity:.4;}
+.action-item.done .action-text{text-decoration:line-through;}
+.action-check{width:16px;height:16px;border:1.5px solid #4ade8066;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:9px;transition:all .15s;background:transparent;color:transparent;}
+.action-item.done .action-check{background:var(--grn);border-color:var(--grn);color:#000;}
+.action-text{font-size:13px;color:#dcfce7;line-height:1.5;}
+
+/* RAW */
+.raw-section{margin-top:16px;}
+.raw-toggle{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:1px;cursor:pointer;background:none;border:none;text-decoration:underline;padding:0;}
+.raw-box{display:none;background:var(--surf);border:1px solid var(--brd);border-radius:3px;padding:16px;font-family:var(--mono);font-size:11px;color:var(--mut);white-space:pre-wrap;line-height:1.7;margin-top:8px;}
+
+/* HISTORY */
+.history-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.history-toolbar h2{font-family:var(--disp);font-size:24px;letter-spacing:2px;}
+.history-empty{font-family:var(--mono);font-size:12px;color:var(--mut);text-align:center;padding:60px 0;letter-spacing:1px;}
+.history-list{display:flex;flex-direction:column;gap:10px;}
+.history-card{background:var(--surf);border:1px solid var(--brd);border-radius:4px;padding:14px 16px;cursor:pointer;transition:border-color .2s;}
+.history-card:hover{border-color:var(--acc);}
+.history-card.has-red{border-left:3px solid var(--red);}
+.history-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.history-reg{font-family:var(--disp);font-size:18px;letter-spacing:2px;color:var(--acc);}
+.history-meta{font-family:var(--mono);font-size:10px;color:var(--mut);flex:1;}
+.history-time{font-family:var(--mono);font-size:10px;color:var(--mut);}
+.history-brief{font-size:12px;color:#94a3b8;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.history-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.h-badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:1px;}
+.h-badge-red{background:var(--red);color:#fff;}
+.h-badge-green{background:#14532d;color:var(--grn);}
+.h-badge-blue{background:#1e2a3a;color:var(--acc2);}
+.delete-btn{font-family:var(--mono);font-size:9px;padding:3px 8px;background:transparent;border:1px solid #3f1212;color:var(--red);border-radius:2px;cursor:pointer;flex-shrink:0;}
+.delete-btn:hover{background:var(--red);color:#fff;}
+
+footer{font-family:var(--mono);font-size:10px;color:var(--mut);text-align:center;letter-spacing:2px;padding:24px;border-top:1px solid var(--brd);opacity:.5;margin-top:24px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surf2);border:1px solid var(--brd);color:var(--txt);font-family:var(--mono);font-size:11px;padding:10px 18px;border-radius:3px;z-index:999;letter-spacing:1px;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeUp .3s ease;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <h1>STR<span>·</span>OPS</h1>
+    <p>Station Traffic Report · Intelligence Layer</p>
+  </div>
+  <div class="header-right">
+    <span class="utc-badge">Tüm saatler UTC</span>
+    <button class="btn-settings" id="settingsBtn" onclick="openSettings()" title="API Ayarları">⚙</button>
+    <div class="station-badge">ISL</div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('analyze',this)">ANALİZ</button>
+  <button class="tab" onclick="showTab('history',this)">GEÇMİŞ</button>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <h3>API AYARLARI</h3>
+    <p>API key bir kez girilir, tarayıcıda kalıcı olarak saklanır.</p>
+    <label>Anthropic API Key</label>
+    <div class="modal-row">
+      <input type="password" class="modal-input" id="modalApiKey" placeholder="sk-ant-api03-…" />
+      <button class="btn-sm" onclick="saveKeyFromModal()">Kaydet</button>
+    </div>
+    <div class="modal-status warn" id="modalStatus">Key girilmedi</div>
+    <div class="modal-footer">
+      <button class="btn-sm" onclick="closeSettings()">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYZE PAGE -->
+<div class="page active" id="tab-analyze">
+
+  <div style="display:none">
+    <input type="password" id="apiKey" />
+  </div>
+
+  <div class="upload-opts" id="uploadOptions">
+    <div class="upload-opt" id="dropZone">
+      <input type="file" id="fileInput" accept="image/*" />
+      <span class="upload-opt-icon">🖼</span>
+      <h3>GALERİDEN SEÇ</h3>
+      <p>Telefon veya bilgisayardan</p>
+    </div>
+    <div class="upload-opt" id="cameraZone">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" />
+      <span class="upload-opt-icon">📷</span>
+      <h3>KAMERAYLA ÇEK</h3>
+      <p>Doğrudan STR fotoğrafla</p>
+    </div>
+  </div>
+
+  <div id="preview-wrap">
+    <img id="previewImg" src="" alt="STR" />
+    <div class="preview-bar">
+      <span id="fileName">—</span>
+      <button class="btn-sm" onclick="clearFile()">× Temizle</button>
+    </div>
+  </div>
+
+  <button class="btn-analyze" id="analyzeBtn" onclick="analyze()" disabled>ANALİZ ET</button>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--mut);letter-spacing:2px;">İŞLENİYOR…</p>
+    <div style="margin-top:12px;">
+      <div class="loading-step" id="step1">▸ Görsel hazırlanıyor</div>
+      <div class="loading-step" id="step2">▸ STR okunuyor</div>
+      <div class="loading-step" id="step3">▸ Operasyonel kurallar uygulanıyor</div>
+      <div class="loading-step" id="step4">▸ Brief hazırlanıyor</div>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+  <div id="results"></div>
+
+  <footer>STR OPS · Istanbul Atatürk · Tüm saatler UTC</footer>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="tab-history">
+  <div class="history-toolbar">
+    <h2>GEÇMİŞ ANALİZLER</h2>
+    <button class="btn-sm" onclick="clearHistory()">Temizle</button>
+  </div>
+  <div id="historyContainer"></div>
+  <footer>STR OPS · Istanbul Atatürk</footer>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let imageBase64 = null;
+let imageMime   = 'image/jpeg';
+const KEY_K  = 'str_api_key';
+const HIST_K = 'str_ops_history_v3';
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+window.onload = () => {
+  const k = localStorage.getItem(KEY_K);
+  if (k) {
+    document.getElementById('apiKey').value = k;
+    document.getElementById('modalApiKey').value = k;
+    setModalStatus(true);
+    document.getElementById('settingsBtn').classList.add('key-set');
+  } else {
+    openSettings();
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════
+function showTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS MODAL
+// ═══════════════════════════════════════════════════════════
+function openSettings() {
+  const k = localStorage.getItem(KEY_K);
+  if (k) { document.getElementById('modalApiKey').value = k; setModalStatus(true); }
+  document.getElementById('settingsModal').classList.add('open');
+  setTimeout(() => document.getElementById('modalApiKey').focus(), 100);
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function closeSettingsOutside(e) { if (e.target === document.getElementById('settingsModal')) closeSettings(); }
+function saveKeyFromModal() {
+  const k = document.getElementById('modalApiKey').value.trim();
+  if (!k) return;
+  localStorage.setItem(KEY_K, k);
+  document.getElementById('apiKey').value = k;
+  document.getElementById('settingsBtn').classList.add('key-set');
+  setModalStatus(true);
+  setTimeout(closeSettings, 600);
+  toast('API key kaydedildi ✓');
+}
+function setModalStatus(ok) {
+  const el = document.getElementById('modalStatus');
+  el.textContent = ok ? '✓ Key kaydedildi — bir daha girmen gerekmez' : 'Key girilmedi';
+  el.className = 'modal-status ' + (ok ? 'ok' : 'warn');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════════════════════
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+const cameraZone = document.getElementById('cameraZone');
+const cameraInput= document.getElementById('cameraInput');
+
+fileInput.addEventListener('change',   e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+cameraInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+
+function loadFile(file) {
+  imageMime = 'image/jpeg';
+  document.getElementById('fileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onerror = () => showError('Dosya okunamadı.');
+  reader.onload = ev => {
+    compressImage(ev.target.result, compressed => {
+      imageBase64 = compressed.split(',')[1];
+      document.getElementById('previewImg').src = ev.target.result;
+      document.getElementById('preview-wrap').style.display = 'block';
+      document.getElementById('uploadOptions').style.display = 'none';
+      document.getElementById('analyzeBtn').disabled = false;
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressImage(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const MAX = 1600;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      if (w < 1 || h < 1) { callback(dataUrl); return; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const out = canvas.toDataURL('image/jpeg', 0.88);
+      callback((out && out !== 'data:,') ? out : dataUrl);
+    } catch(e) { callback(dataUrl); }
+  };
+  img.onerror = () => callback(dataUrl);
+  img.src = dataUrl;
+}
+
+function clearFile() {
+  imageBase64 = null;
+  fileInput.value = ''; cameraInput.value = '';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('uploadOptions').style.display = 'flex';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEM PROMPT
+// ═══════════════════════════════════════════════════════════
+const SYSTEM_PROMPT = `Sen İstanbul Atatürk Business Aviation istasyonu operasyon analistisin. STR fotoğrafını oku ve aşağıdaki kurallara göre analiz et. YALNIZCA geçerli JSON döndür.
+
+KURAL 0 — TARİH DOĞRULAMA (her uçuş için ilk yapılacak):
+- DATE sütunundaki ilk satır = geliş tarihi (arrival_date)
+- DATE sütunundaki ikinci satır = kalkış tarihi (departure_date)
+- ATA sütununda saat varsa → uçak çoktan inmiş, park halinde. status="ARRIVED"
+- ATA boşsa → uçak henüz gelmedi. status="INBOUND"
+- Kalkış tarihi geçmişteyse → status="DEPARTED"
+- ARRIVED uçak için crew_eta_terminal null olmalı. Uçak zaten yerde, ETA hesaplanmaz.
+
+KURAL 1 — HANGAR:
+- Remarks'ta "hangar", "BE Aero", "TK Hangar", "Genel Havacılık Hangar" gibi ifade varsa:
+  - Geliş operasyonu ise → hangar_op="ARRIVAL" (hangara giriş)
+  - Kalkış operasyonu ise → hangar_op="DEPARTURE" (hangardan çıkış)
+  - Yoksa hangar_op=null
+
+KURAL 2 — SAATLER:
+- Tüm saatler UTC olarak yaz. sta_local, std_local alanlarını KULLANMA, null bırak.
+- Tek istisna: hotel_pu_time lokal olabilir, olduğu gibi yaz.
+
+KURAL 3 — BAŞLIK:
+- registration: kuyruk tescili (TC-ABC, T7SLA gibi). Yoksa callsign kullan.
+- arr_callsign: geliş callsign'ı (NJE323B gibi)
+- dep_callsign: kalkış callsign'ı (NJE064P gibi)
+- company: operatör şirket adı (NETJETS TRANSPORTES gibi)
+- Brief ve aksiyon yazarken sadece kuyruk (registration) kullan, callsign kullanma.
+
+KURAL 4 — EKİP TERMİNAL SÜRESİ:
+- crew_eta_terminal alanı KULLANILMAYACAK. Her zaman null.
+
+KURAL 5 — YAKIT KURALLARI:
+- Uçaklar %95 kalkış gününde yakıt alır. Gelişte yakıt almaz (aksi belirtilmedikçe).
+- Gelişte yakıt aldığının işaretleri (remarks'ta): "Fuel on arrival", "Fuel ARR", "ARR fuel", "Fuel OK on ARR", "Fuel OPET OK on ARR"
+- Yakıt istemez işaretleri: "No fuel required", "Fuel not required", "Fuel istemez"
+- fuel_required=true: kalkış günü bugünse VE yakıt istemez ibaresi yoksa
+- fuel_required=false: yakıt istemez ibaresi varsa VEYA kalkış tarihi bugün değilse
+- FUEL TBA + kalkış bugün → risks içine RED: "Yakıt release firmadan talep edilmelidir."
+- FUEL GAS/PO/SOCAR/herhangi sağlayıcı → onaylı
+
+KURAL 6 — OTEL/PU:
+- Remarks'ta otel adı VAR ama PU saati YOK → actions'a ekle: "Otelden alınış saatini (PU) öğren."
+- Yatıda kalacak + otel bilgisi YOK → actions'a ekle: "Gelişte ekibin otel bilgisini öğren."
+
+KURAL 7 — PAX:
+- PAX X-Y: X=geliş yolcusu, Y=kalkış yolcusu.
+
+JSON YAPISI (tüm alanlar zorunlu, eksik için null):
+{"str_date":"DD.MM.YYYY","total_ops":0,"flights":[{"registration":"","company":"","arr_callsign":null,"dep_callsign":null,"aircraft_type":"","route":"","arrival_date":"DD.MM.YYYY","departure_date":null,"sta_utc":"","ata":null,"std_utc":null,"sta_local":null,"std_local":null,"status":"INBOUND","hangar_op":null,"pax_arr":0,"pax_dep":0,"crew_eta_terminal":null,"overnight":false,"hotel":null,"hotel_pu_time":null,"fuel_status":"","fuel_required":false,"fuel_risk_level":"NO_RISK","risks":[],"actions":[],"brief":""}],"shift_summary":"","fuel_watch":[],"raw_remarks":""}
+
+fuel_watch: kalkış günü bugün olan, yakıt gerekli olan uçakların registration listesi. Örnek: ["T7SLA","CSDQA"]
+
+SADECE JSON döndür.`;
+
+// ═══════════════════════════════════════════════════════════
+// ANALYZE
+// ═══════════════════════════════════════════════════════════
+async function analyze() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { openSettings(); return; }
+  if (!imageBase64) return;
+
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  const steps = ['step1','step2','step3','step4'];
+  steps.forEach(s => document.getElementById(s).className = 'loading-step');
+  setStep(0, steps);
+
+  const today = new Date().toLocaleDateString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric'});
+
+  try {
+    setStep(1, steps);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT + '\n\nBugünün tarihi: ' + today,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imageMime, data: imageBase64 } },
+            { type: 'text', text: 'Bu STR\'ı analiz et.' }
+          ]
+        }]
+      })
+    });
+
+    setStep(2, steps);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || `API Hatası: ${response.status}`);
+
+    let rawText = '';
+    if (Array.isArray(data.content)) {
+      for (const b of data.content) { if (b.type === 'text' && b.text) { rawText = b.text; break; } }
+    }
+    if (!rawText) throw new Error('API yanıtı boş.\n' + JSON.stringify(data).slice(0, 300));
+
+    setStep(3, steps);
+    const parsed = robustParse(rawText);
+    saveToHistory(parsed);
+    renderResults(parsed);
+
+  } catch(err) {
+    showError(err.message);
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+}
+
+let stepTimer = null;
+function setStep(idx, steps) {
+  clearTimeout(stepTimer);
+  steps.forEach((s, i) => {
+    const el = document.getElementById(s);
+    if (i < idx) el.className = 'loading-step done';
+    else if (i === idx) el.className = 'loading-step active';
+    else el.className = 'loading-step';
+  });
+  if (idx < steps.length - 1) stepTimer = setTimeout(() => setStep(idx + 1, steps), 700);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARSE
+// ═══════════════════════════════════════════════════════════
+function robustParse(raw) {
+  let s = raw.trim().replace(/^```[\w]*\s*/i,'').replace(/\s*```$/i,'').replace(/`/g,'').trim();
+  const start = s.indexOf('{'), end = s.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('JSON bulunamadı:\n' + raw.slice(0,200));
+  s = s.slice(start, end + 1);
+  try { return JSON.parse(s); } catch(e) {
+    let br=0,bk=0,inS=false,esc=false;
+    for(let i=0;i<s.length;i++){const c=s[i];if(esc){esc=false;continue;}if(c==='\\'&&inS){esc=true;continue;}if(c==='"'){inS=!inS;continue;}if(inS)continue;if(c==='{')br++;if(c==='}')br--;if(c==='[')bk++;if(c===']')bk--;}
+    s=s.replace(/,\s*$/,'');
+    while(bk>0){s+=']';bk--;}while(br>0){s+='}';br--;}
+    return JSON.parse(s);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+const actionState = {};
+function getActionKey(reg, text) { return reg + '||' + text; }
+
+function renderResults(data) {
+  const container = document.getElementById('results');
+  const riskIcon  = {RED:'🔴',YELLOW:'🟡',GREEN:'🟢',INFO:'🔵'};
+
+  const waText = buildWhatsApp(data);
+  window._currentWaText = waText;
+
+  const flights = data.flights || [];
+  const fuelWatch = data.fuel_watch || [];
+
+  let html = `
+    <div class="result-header">
+      <h2>ANALİZ SONUÇLARI</h2>
+      <span class="result-ts">${new Date().toLocaleTimeString('tr-TR')} · ${data.str_date||''}</span>
+      <button class="btn-wa" onclick="copyWhatsApp()">⎘ WhatsApp'a Kopyala</button>
+    </div>
+
+    <div class="summary-box">
+      <h3>VARDIYA ÖZETİ</h3>
+      <div class="summary-stat">${data.str_date||''} · ${flights.length} operasyon</div>
+      <div class="summary-content">${data.shift_summary||''}</div>
+    </div>`;
+
+  // Fuel watch box
+  if (fuelWatch.length > 0) {
+    html += `<div class="fuel-watch">
+      <h3>⛽ YAKIT TAKİP</h3>
+      ${fuelWatch.map(reg => `<div class="fuel-watch-item">✈ ${reg}</div>`).join('')}
+      <div class="fuel-watch-note">⚠ Yakıt saatlerini WhatsApp üzerinden teyit et ve takip et.</div>
+    </div>`;
+  }
+
+  html += `<div class="flights-grid">`;
+
+  flights.forEach((f, fi) => {
+    const hasRed = (f.risks||[]).some(r => r.level === 'RED');
+    const statusLabel = {ARRIVED:'✈ YERDE', INBOUND:'▸ GELİYOR', DEPARTED:'↑ KALDIRILDI', HANGAR:'⬡ HANGAR'}[f.status] || f.status;
+
+    html += `
+      <div class="flight-card ${hasRed?'has-red':''}" style="animation-delay:${fi*0.08}s">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="reg">${f.registration||'—'}</div>
+            ${f.company ? `<div class="company">${f.company}</div>` : ''}
+            ${(f.arr_callsign||f.dep_callsign) ? `<div class="callsigns">${[f.arr_callsign,f.dep_callsign].filter(Boolean).join(' / ')}</div>` : ''}
+          </div>
+          <div class="status-badge status-${f.status||'INBOUND'}">${statusLabel}</div>
+        </div>
+
+        <div class="pills">
+          ${f.route         ? `<span class="pill pill-route">${f.route}</span>` : ''}
+          ${f.arrival_date  ? `<span class="pill pill-date">GEL ${f.arrival_date}</span>` : ''}
+          ${f.sta_utc       ? `<span class="pill pill-time">STA ${f.sta_utc}Z</span>` : ''}
+          ${f.ata           ? `<span class="pill pill-time">ATA ${f.ata}Z</span>` : ''}
+          ${f.departure_date? `<span class="pill pill-date">KAL ${f.departure_date}</span>` : ''}
+          ${f.std_utc       ? `<span class="pill pill-time">STD ${f.std_utc}Z</span>` : ''}
+          ${f.aircraft_type ? `<span class="pill pill-ac">${f.aircraft_type}</span>` : ''}
+          ${f.hangar_op     ? `<span class="pill" style="background:#1e1a2a;color:#a78bfa">⬡ HANGAR ${f.hangar_op==='ARRIVAL'?'GİRİŞ':'ÇIKIŞ'}</span>` : ''}
+        </div>
+
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item"><label>PAX Geliş / Kalkış</label><div class="val">${f.pax_arr??'?'} / ${f.pax_dep??'?'}</div></div>
+            <div class="info-item"><label>Yatı</label><div class="val">${f.overnight?'✓ Yatıda':'— Geçiş'}</div></div>
+            <div class="info-item"><label>Otel</label><div class="val">${f.hotel||'—'}</div></div>
+            <div class="info-item"><label>PU Saati (Lokal)</label><div class="val">${f.hotel_pu_time||'—'}</div></div>
+            <div class="info-item"><label>Yakıt</label><div class="val">${f.fuel_status||'—'}</div></div>
+          </div>
+
+          ${f.brief ? `<div class="flight-brief">${f.brief}</div>` : ''}
+
+          ${(f.risks||[]).length ? `
+          <div class="risks">
+            ${f.risks.map(r => `
+              <div class="risk-item risk-${r.level||'INFO'}">
+                <span class="risk-icon">${riskIcon[r.level]||'ℹ'}</span>
+                <div class="risk-text"><strong>${r.category||r.level}</strong>${r.message}</div>
+              </div>`).join('')}
+          </div>` : ''}
+
+          ${(f.actions||[]).length ? `
+          <div class="actions-section">
+            <h4>⚡ Aksiyon Listesi</h4>
+            <div class="action-list">
+              ${f.actions.map((a, ai) => {
+                const key  = getActionKey(f.registration||fi, a);
+                const done = actionState[key] ? 'done' : '';
+                const chk  = actionState[key] ? '✓' : '';
+                return `<div class="action-item ${done}" id="act-${fi}-${ai}" onclick="toggleAction('${fi}','${ai}','${escJs(a)}','${escJs(f.registration||fi)}')">
+                  <div class="action-check">${chk}</div>
+                  <span class="action-text">${a}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+
+  if (data.raw_remarks) {
+    html += `<div class="raw-section">
+      <button class="raw-toggle" onclick="toggleRaw()">Ham Remarks ▾</button>
+      <div class="raw-box" id="rawBox">${data.raw_remarks}</div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+  container.style.display = 'block';
+  container.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACTION TOGGLE
+// ═══════════════════════════════════════════════════════════
+function toggleAction(fi, ai, text, reg) {
+  const key = getActionKey(reg, text);
+  actionState[key] = !actionState[key];
+  const el = document.getElementById(`act-${fi}-${ai}`);
+  if (!el) return;
+  el.className = 'action-item' + (actionState[key] ? ' done' : '');
+  el.querySelector('.action-check').textContent = actionState[key] ? '✓' : '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// WHATSAPP
+// ═══════════════════════════════════════════════════════════
+function buildWhatsApp(data) {
+  const now  = new Date();
+  const time = now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  const date = now.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  let msg = `✈️ STR ANALİZİ — ISL OPS\n📅 ${data.str_date||date} · ${time} UTC\n${'─'.repeat(28)}\n`;
+  msg += `📋 ${data.shift_summary||''}\n`;
+
+  const fw = data.fuel_watch||[];
+  if (fw.length) msg += `\n⛽ YAKIT TAKİP: ${fw.join(', ')}\n(Yakıt saatlerini WhatsApp'tan teyit et)\n`;
+
+  (data.flights||[]).forEach(f => {
+    msg += `\n${f.registration||''}${f.route?' · '+f.route:''}\n`;
+    if (f.sta_utc)  msg += `  STA: ${f.sta_utc}Z\n`;
+    if (f.std_utc)  msg += `  STD: ${f.std_utc}Z\n`;
+    msg += `  PAX: ${f.pax_arr??0}/${f.pax_dep??0}\n`;
+    if (f.hotel) msg += `  Otel: ${f.hotel}${f.hotel_pu_time?' PU '+f.hotel_pu_time+' (lokal)':''}\n`;
+    const reds = (f.risks||[]).filter(r=>r.level==='RED');
+    if (reds.length) msg += `  ⚠️ ${reds.map(r=>r.message).join(' | ')}\n`;
+    if ((f.actions||[]).length) { msg += `  ⚡ Aksiyonlar:\n`; f.actions.forEach((a,i)=>{ msg+=`    ${i+1}. ${a}\n`; }); }
+  });
+
+  msg += `${'─'.repeat(28)}\nSTR OPS · Istanbul Atatürk 🛫`;
+  return msg;
+}
+
+function copyWhatsApp() {
+  const text = window._currentWaText;
+  if (!text) return;
+  const go = () => toast('WhatsApp mesajı kopyalandı ✓');
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(go).catch(fb); }
+  else fb();
+  function fb() { const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();go(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════
+function saveToHistory(parsed) {
+  try {
+    const hist = JSON.parse(localStorage.getItem(HIST_K)||'[]');
+    hist.unshift({ id:Date.now(), savedAt:new Date().toLocaleString('tr-TR'), data:parsed });
+    if (hist.length > 50) hist.splice(50);
+    localStorage.setItem(HIST_K, JSON.stringify(hist));
+  } catch(e) {}
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HIST_K)||'[]'); } catch(e) { return []; }
+}
+
+function renderHistory() {
+  const hist = loadHistory();
+  const container = document.getElementById('historyContainer');
+  if (!hist.length) {
+    container.innerHTML = '<div class="history-empty">— Henüz kayıt yok —<br>Analiz yaptıkça burada görünür.</div>';
+    return;
+  }
+  let html = '<div class="history-list">';
+  hist.forEach(entry => {
+    const d = entry.data;
+    const fs = d.flights||[];
+    const hasRed = fs.some(f=>(f.risks||[]).some(r=>r.level==='RED'));
+    const acts = fs.reduce((s,f)=>s+(f.actions||[]).length,0);
+    const regs = fs.map(f=>f.registration||'').join(', ');
+    const prev = fs[0]?.brief||d.shift_summary||'';
+    html += `
+      <div class="history-card ${hasRed?'has-red':''}" onclick="loadFromHistory(${entry.id})">
+        <div class="history-card-top">
+          <div class="history-reg">${regs||'—'}</div>
+          <div class="history-meta">${d.str_date||''} · ${fs.length} uçuş</div>
+          <div class="history-time">${entry.savedAt}</div>
+          <button class="delete-btn" onclick="deleteHistory(event,${entry.id})">Sil</button>
+        </div>
+        <div class="history-brief">${prev.slice(0,110)}${prev.length>110?'…':''}</div>
+        <div class="history-badges">
+          ${hasRed?'<span class="h-badge h-badge-red">⚠ Risk</span>':'<span class="h-badge h-badge-green">✓ Risksiz</span>'}
+          ${acts?`<span class="h-badge h-badge-blue">⚡ ${acts} aksiyon</span>`:''}
+          ${fs.some(f=>f.overnight)?'<span class="h-badge h-badge-blue">🌙 Yatı</span>':''}
+          ${(d.fuel_watch||[]).length?`<span class="h-badge" style="background:#3d2010;color:#fbbf24">⛽ Yakıt takip</span>`:''}
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function loadFromHistory(id) {
+  const entry = loadHistory().find(h => h.id === id);
+  if (!entry) return;
+  renderResults(entry.data);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-analyze').classList.add('active');
+  document.querySelector('.tab').classList.add('active');
+  toast('Geçmiş analiz yüklendi');
+}
+
+function deleteHistory(e, id) {
+  e.stopPropagation();
+  if (!confirm('Bu analizi sil?')) return;
+  const h = loadHistory().filter(x => x.id !== id);
+  localStorage.setItem(HIST_K, JSON.stringify(h));
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('Tüm geçmiş silinecek. Emin misin?')) return;
+  localStorage.removeItem(HIST_K);
+  renderHistory();
+  toast('Geçmiş temizlendi');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.innerHTML = '⚠ HATA: ' + msg.replace(/\n/g,'<br>');
+  box.style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+function toggleRaw() {
+  const b = document.getElementById('rawBox');
+  b.style.display = b.style.display === 'block' ? 'none' : 'block';
+}
+
+function escJs(s) { return String(s).replace(/'/g,"\\'").replace(/\n/g,' '); }
+
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+</script>
+</body>
+</html>
